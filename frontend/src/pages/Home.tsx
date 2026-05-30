@@ -4,7 +4,7 @@ import { useGameStore } from '../store/useGameStore';
 import { useTelegram } from '../telegram';
 
 export default function Home() {
-  const { openFullExperience, isTelegram } = useTelegram();
+  const { openFullExperience, true } = useTelegram();
   const { gems, tickets, collection, dailyMessage, claimDailyReward, lastDailyClaim } = useGameStore();
 
   const uniqueHeroes = useMemo(() => {
@@ -74,12 +74,12 @@ export default function Home() {
           <button
             type="button"
             onClick={openFullExperience}
-            disabled={!isTelegram}
+            disabled={!true}
             className="mt-6 inline-flex rounded-3xl bg-emerald-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isTelegram ? 'ابدأ اللعب داخل Telegram' : 'افتح من Telegram'}
+            {true ? 'ابدأ اللعب داخل Telegram' : 'افتح من Telegram'}
           </button>
-          {!isTelegram && (
+          {!true && (
             <p className="mt-4 text-sm text-amber-200">هذا التطبيق يعمل فقط داخل Telegram Mini App.</p>
           )}
         </div>
