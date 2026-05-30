@@ -1,172 +1,157 @@
-import { AnimatePresence, motion } from 'framer-motion';
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { availableHeroes, Hero, rarityColors } from '../data/heroes';
+import { useState } from 'react';
 import { useGameStore } from '../store/useGameStore';
 
-const rarityWeights: Record<Hero['rarity'], number> = {
-  عادي: 56,
-  نادر: 30,
-  ملحمي: 12,
-  أسطوري: 2,
+const heroes = [
+  { id: 'h1', name: 'كايرو المظلم', rank: 'SSS', emoji: '🌑', element: 'ظلام', attack: 95, defense: 70, speed: 85, skill: 'ضربة الفناء', color: 'from-purple-900 to-slate-900', border: 'border-purple-500' },
+  { id: 'h2', name: 'سيرا النارية', rank: 'SS', emoji: '🔥', element: 'نار', attack: 88, defense: 60, speed: 90, skill: 'عاصفة اللهب', color: 'from-red-900 to-slate-900', border: 'border-red-500' },
+  { id: 'h3', name: 'ثالوس الجليدي', rank: 'SS', emoji: '❄️', element: 'جليد', attack: 82, defense: 78, speed: 72, skill: 'درع الثلج', color: 'from-blue-900 to-slate-900', border: 'border-blue-500' },
+  { id: 'h4', name: 'زيفر الريح', rank: 'S', emoji: '💨', element: 'ريح', attack: 75, defense: 65, speed: 98, skill: 'شفرة الهواء', color: 'from-cyan-900 to-slate-900', border: 'border-cyan-500' },
+  { id: 'h5', name: 'أورا الذهبية', rank: 'S', emoji: '⚡', element: 'برق', attack: 78, defense: 68, speed: 92, skill: 'صاعقة السماء', color: 'from-yellow-900 to-slate-900', border: 'border-yellow-500' },
+  { id: 'h6', name: 'نيكس الظل', rank: 'A', emoji: '🗡️', element: 'ظل', attack: 70, defense: 72, speed: 80, skill: 'طعنة الظلام', color: 'from-slate-800 to-slate-900', border: 'border-slate-500' },
+  { id: 'h7', name: 'ليرا الطبيبة', rank: 'A', emoji: '💚', element: 'طبيعة', attack: 55, defense: 85, speed: 70, skill: 'شفاء مقدس', color: 'from-green-900 to-slate-900', border: 'border-green-500' },
+  { id: 'h8', name: 'ركس المحارب', rank: 'B', emoji: '⚔️', element: 'أرض', attack: 65, defense: 80, speed: 60, skill: 'ضربة الأرض', color: 'from-amber-900 to-slate-900', border: 'border-amber-600' },
+];
+
+const rankColors: Record<string, string> = {
+  SSS: 'text-purple-300 bg-purple-900/50 border-purple-500',
+  SS: 'text-red-300 bg-red-900/50 border-red-500',
+  S: 'text-yellow-300 bg-yellow-900/50 border-yellow-500',
+  A: 'text-blue-300 bg-blue-900/50 border-blue-500',
+  B: 'text-slate-300 bg-slate-800/50 border-slate-500',
 };
 
-function selectRarity(): Hero['rarity'] {
-  const roll = Math.random() * 100;
-  if (roll < 2) return 'أسطوري';
-  if (roll < 14) return 'ملحمي';
-  if (roll < 44) return 'نادر';
-  return 'عادي';
-}
-
-function summonHero(): Hero {
-  const rarity = selectRarity();
-  const choices = availableHeroes.filter((hero) => hero.rarity === rarity);
-  return choices[Math.floor(Math.random() * choices.length)];
-}
+const SINGLE_COST = 100;
+const MULTI_COST = 900;
 
 export default function Summon() {
-  const { gems, tickets, summonWithGems, summonWithTickets, collection } = useGameStore();
-  const [isSummoning, setIsSummoning] = useState(false);
-  const [lastHero, setLastHero] = useState<Hero | null>(null);
-  const [message, setMessage] = useState('');
+  const { gems, collection, addGems, togglePartyMember } = useGameStore();
+  const [pulled, setPulled] = useState<typeof heroes>([]);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [showResult, setShowResult] = useState(false);
 
-  const uniqueCount = useMemo(() => new Set(collection.map((hero) => hero.id)).size, [collection]);
+  const getRandom = () => {
+    const rand = Math.random();
+    if (rand < 0.02) return heroes.filter(h => h.rank === 'SSS');
+    if (rand < 0.08) return heroes.filter(h => h.rank === 'SS');
+    if (rand < 0.25) return heroes.filter(h => h.rank === 'S');
+    if (rand < 0.55) return heroes.filter(h => h.rank === 'A');
+    return heroes.filter(h => h.rank === 'B');
+  };
 
-  const doSummon = async (method: 'ticket' | 'gems') => {
-    if (isSummoning) return;
-    setIsSummoning(true);
-    setMessage('يجري فتح البوابة...');
-    const hero = summonHero();
-
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    const success = method === 'ticket' ? summonWithTickets(hero) : summonWithGems(hero);
-    if (!success) {
-      setMessage('لا توجد موارد كافية للاستدعاء. حاول لاحقاً.');
-      setIsSummoning(false);
-      return;
-    }
-
-    setLastHero(hero);
-    setMessage(`لقد استدعيت ${hero.name} - ${hero.rarity}!`);
-    setIsSummoning(false);
+  const summon = (count: number) => {
+    const cost = count === 1 ? SINGLE_COST : MULTI_COST;
+    if (gems < cost) { alert(`تحتاج ${cost} جوهرة!`); return; }
+    addGems(-cost);
+    setIsAnimating(true);
+    setShowResult(false);
+    setTimeout(() => {
+      const results = Array.from({ length: count }, () => {
+        const pool = getRandom();
+        return pool[Math.floor(Math.random() * pool.length)];
+      });
+      setPulled(results);
+      setIsAnimating(false);
+      setShowResult(true);
+    }, 1500);
   };
 
   return (
-    <section className="space-y-6 text-right">
-      <div className="rounded-[2rem] border border-violet-400/15 bg-slate-950/90 p-6 shadow-xl shadow-violet-500/10">
-        <h2 className="text-3xl font-black text-violet-200">بوابة الاستدعاء</h2>
-        <p className="mt-3 text-slate-400 leading-7">
-          استدعِ أبطالك باستخدام التذاكر أو الجواهر. كل استدعاء يحمل احتمالية للحصول على بطل نادر أو أسطوري.
-        </p>
+    <div className="min-h-screen bg-slate-950 text-white p-4" dir="rtl">
+      {/* Header */}
+      <div className="bg-gradient-to-b from-purple-900/30 to-slate-900 border border-purple-800/40 rounded-2xl p-5 text-center mb-4">
+        <p className="text-purple-400 text-xs tracking-widest">✨ بوابة الاستدعاء</p>
+        <h1 className="text-3xl font-black mt-1 bg-gradient-to-r from-purple-300 to-pink-400 bg-clip-text text-transparent">استدعاء الأبطال</h1>
+        <p className="text-yellow-400 font-bold mt-2">💎 {gems} جوهرة</p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-        <div className="space-y-4 rounded-[2rem] border border-slate-800 bg-slate-900/90 p-6 shadow-2xl shadow-slate-950/50">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm uppercase tracking-[0.35em] text-slate-500">موارد الاستدعاء</p>
-              <h3 className="mt-3 text-3xl font-black text-white">{tickets} تذكرة / {gems} جوهرة</h3>
-            </div>
-            <div className="rounded-3xl bg-slate-950/80 px-4 py-3 text-sm text-slate-300">
-              أبطال فريدون: {uniqueCount}
-            </div>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-3xl border border-slate-800 bg-slate-950/80 p-4 text-center">
-              <p className="text-sm text-slate-500">نادر</p>
-              <p className="mt-2 text-xl font-semibold text-sky-200">30%</p>
-            </div>
-            <div className="rounded-3xl border border-slate-800 bg-slate-950/80 p-4 text-center">
-              <p className="text-sm text-slate-500">ملحمي</p>
-              <p className="mt-2 text-xl font-semibold text-fuchsia-200">12%</p>
-            </div>
-            <div className="rounded-3xl border border-slate-800 bg-slate-950/80 p-4 text-center">
-              <p className="text-sm text-slate-500">أسطوري</p>
-              <p className="mt-2 text-xl font-semibold text-amber-200">2%</p>
-            </div>
-          </div>
-
-          <div className="space-y-3 rounded-[2rem] border border-slate-800 bg-slate-950/80 p-5">
-            <p className="text-sm text-slate-500">سجل الاستدعاء</p>
-            <p className="text-base text-slate-300">{message || 'اضغط على زر استدعاء لرؤية البطل الجديد.'}</p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <button
-              type="button"
-              onClick={() => doSummon('ticket')}
-              disabled={isSummoning || tickets < 10}
-              className="rounded-3xl bg-emerald-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              استدعاء 10 تذاكر
-            </button>
-            <button
-              type="button"
-              onClick={() => doSummon('gems')}
-              disabled={isSummoning || gems < 100}
-              className="rounded-3xl bg-violet-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-violet-400 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              استدعاء 100 جوهرة
-            </button>
+      {/* Animation */}
+      {isAnimating && (
+        <div className="fixed inset-0 bg-slate-950/90 flex items-center justify-center z-50">
+          <div className="text-center">
+            <div className="text-8xl animate-bounce">✨</div>
+            <p className="text-white text-xl font-bold mt-4 animate-pulse">جاري الاستدعاء...</p>
           </div>
         </div>
+      )}
 
-        <div className="rounded-[2rem] border border-slate-800 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950/95 p-6 shadow-2xl shadow-slate-950/70">
-          <div className="relative overflow-hidden rounded-[2rem] border border-slate-800/50 bg-slate-950/90 p-5">
-            <AnimatePresence mode="wait">
-              {lastHero ? (
-                <motion.div
-                  key={lastHero.id}
-                  initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.75, y: -20 }}
-                  transition={{ duration: 0.45, ease: 'easeOut' }}
-                  className="space-y-4 text-center"
-                >
-                  <div className={`mx-auto flex h-28 w-28 items-center justify-center rounded-[2rem] bg-gradient-to-br ${lastHero.accent} text-4xl shadow-2xl shadow-slate-950/30`}>
-                    {lastHero.image}
+      {/* Results */}
+      {showResult && (
+        <div className="mb-4">
+          <p className="text-center text-yellow-400 font-bold mb-3">🎉 نتائج الاستدعاء</p>
+          <div className="grid grid-cols-2 gap-2">
+            {pulled.map((hero, i) => (
+              <div key={i} className={`bg-gradient-to-b ${hero.color} border ${hero.border} rounded-2xl p-3`}>
+                <div className="flex justify-between items-start">
+                  <span className="text-3xl">{hero.emoji}</span>
+                  <span className={`text-xs font-black px-2 py-0.5 rounded-full border ${rankColors[hero.rank]}`}>{hero.rank}</span>
+                </div>
+                <p className="font-bold text-white mt-2 text-sm">{hero.name}</p>
+                <p className="text-slate-400 text-xs">{hero.element}</p>
+                <div className="mt-2 space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-red-400">⚔️ {hero.attack}</span>
+                    <span className="text-blue-400">🛡️ {hero.defense}</span>
                   </div>
-                  <p className="text-sm uppercase tracking-[0.35em] text-slate-500">{lastHero.rarity}</p>
-                  <h3 className="text-2xl font-black text-white">{lastHero.name}</h3>
-                  <p className="text-slate-400">{lastHero.role} – {lastHero.element}</p>
-                  <p className="mx-auto max-w-sm text-sm text-slate-300">{lastHero.description}</p>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="placeholder"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.35 }}
-                  className="space-y-4 text-center"
-                >
-                  <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-[2rem] bg-slate-900 text-4xl text-slate-400 shadow-2xl shadow-slate-950/20">
-                    🔮
-                  </div>
-                  <p className="text-sm uppercase tracking-[0.35em] text-slate-500">لا يوجد بطل بعد</p>
-                  <h3 className="text-2xl font-black text-white">استدعِ لتكشف البطل</h3>
-                  <p className="mx-auto max-w-sm text-sm text-slate-300">استخدم التذاكر أو الجواهر لفتح سجل الاستدعاء.</p>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                </div>
+              </div>
+            ))}
           </div>
+          <button onClick={() => setShowResult(false)} className="w-full mt-3 bg-slate-800 border border-slate-700 text-white py-3 rounded-xl font-bold">
+            إغلاق
+          </button>
+        </div>
+      )}
+
+      {/* Summon Buttons */}
+      {!showResult && (
+        <div className="space-y-3 mb-4">
+          <button onClick={() => summon(1)} className="w-full bg-gradient-to-r from-purple-700 to-purple-900 border border-purple-600 text-white py-4 rounded-2xl font-black text-lg">
+            ✨ استدعاء واحد — 💎 {SINGLE_COST}
+          </button>
+          <button onClick={() => summon(10)} className="w-full bg-gradient-to-r from-yellow-700 to-yellow-900 border border-yellow-600 text-white py-4 rounded-2xl font-black text-lg">
+            🌟 استدعاء ×10 — 💎 {MULTI_COST}
+          </button>
+        </div>
+      )}
+
+      {/* Rates */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 mb-4">
+        <p className="text-slate-400 text-xs font-bold mb-2">📊 نسب الاستدعاء</p>
+        <div className="space-y-1">
+          {[['SSS', '2%'], ['SS', '6%'], ['S', '17%'], ['A', '30%'], ['B', '45%']].map(([rank, rate]) => (
+            <div key={rank} className="flex justify-between text-xs">
+              <span className={`font-black ${rankColors[rank].split(' ')[0]}`}>{rank}</span>
+              <span className="text-slate-400">{rate}</span>
+            </div>
+          ))}
         </div>
       </div>
 
-      <div className="flex flex-col gap-4 rounded-[2rem] border border-slate-800 bg-slate-900/90 p-5 shadow-xl shadow-slate-950/40 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-sm text-slate-500">نصيحة</p>
-          <p className="mt-2 text-slate-400">الأبطال الأسطوريون نادرون جداً، لكن الاستمرار في الاستدعاء يزيد من فرصك لبناء فرقة فانتازية قوية.</p>
+      {/* Collection */}
+      <div>
+        <p className="text-slate-400 text-xs font-bold mb-2">📚 جميع الأبطال ({heroes.length})</p>
+        <div className="grid grid-cols-2 gap-2">
+          {heroes.map(hero => {
+            const owned = collection.includes(hero.id);
+            return (
+              <div key={hero.id} className={`bg-gradient-to-b ${hero.color} border ${hero.border} rounded-2xl p-3 ${!owned ? 'opacity-40 grayscale' : ''}`}>
+                <div className="flex justify-between items-start">
+                  <span className="text-2xl">{hero.emoji}</span>
+                  <span className={`text-xs font-black px-2 py-0.5 rounded-full border ${rankColors[hero.rank]}`}>{hero.rank}</span>
+                </div>
+                <p className="font-bold text-white mt-1 text-sm">{hero.name}</p>
+                <p className="text-slate-400 text-xs">{hero.skill}</p>
+                {owned && (
+                  <button onClick={() => togglePartyMember(hero.id)}
+                    className="mt-2 w-full text-xs bg-slate-800/50 border border-slate-600 text-slate-300 py-1 rounded-lg">
+                    + إضافة للفرقة
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
-        <Link
-          to="/party"
-          className="inline-flex rounded-3xl bg-slate-950/80 px-5 py-3 text-sm font-semibold text-slate-100 transition hover:bg-slate-900"
-        >
-          انتقل إلى تشكيل الفريق
-        </Link>
       </div>
-    </section>
+    </div>
   );
 }
