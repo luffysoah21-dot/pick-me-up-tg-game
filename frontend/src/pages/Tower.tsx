@@ -1,49 +1,79 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { useGameStore } from '../store/useGameStore';
+
+const floors = Array.from({ length: 20 }, (_, i) => ({
+  floor: i + 1,
+  enemy: ['وحش الظلام', 'تنين النار', 'عفريت الرياح', 'شبح الجليد', 'أسطورة الظلال'][i % 5],
+  reward: [50, 75, 100, 150, 200][i % 5],
+  progress: Math.min(100, (i + 1) * 5),
+}));
 
 export default function Tower() {
+  const { gems, tickets, addGems, useTicket } = useGameStore();
+  const [currentFloor, setCurrentFloor] = useState(1);
+  const [battleResult, setBattleResult] = useState<null | 'win' | 'lose'>(null);
+  const [isBattling, setIsBattling] = useState(false);
+
+  const floor = floors[currentFloor - 1];
+
+  const startBattle = () => {
+    if (tickets <= 0) {
+      alert('لا تملك تذاكر كافية!');
+      return;
+    }
+    setIsBattling(true);
+    setBattleResult(null);
+    useTicket();
+    setTimeout(() => {
+      const win = Math.random() > 0.4;
+      setBattleResult(win ? 'win' : 'lose');
+      if (win) {
+        addGems(floor.reward);
+        if (currentFloor < 20) setCurrentFloor(f => f + 1);
+      }
+      setIsBattling(false);
+    }, 1500);
+  };
+
   return (
-    <section className="space-y-6 text-right">
-      <div className="rounded-[2rem] border border-cyan-400/15 bg-slate-950/90 p-6 shadow-xl shadow-cyan-500/10">
-        <h2 className="text-3xl font-black text-cyan-200">برج التحدي</h2>
-        <p className="mt-3 text-slate-400 leading-7">
-          تسلّق طبقات البرج وواجه التحديات القاتلة. كل مستوى يمنحك فرصة جديدة لاستدعاء مكافآت ومهارات.
-        </p>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-[2rem] border border-slate-800 bg-slate-900/90 p-6 shadow-2xl shadow-slate-950/40">
-          <p className="text-sm text-slate-500">المستوى الحالي</p>
-          <p className="mt-3 text-3xl font-black text-white">الطابق 12</p>
-          <p className="mt-2 text-slate-400">التهديد: أسطورة الظلال</p>
-        </div>
-
-        <div className="rounded-[2rem] border border-slate-800 bg-slate-900/90 p-6 shadow-2xl shadow-slate-950/40">
-          <p className="text-sm text-slate-500">أقرب مكافأة</p>
-          <p className="mt-3 text-2xl font-semibold text-emerald-300">سيف القمر المظلم</p>
-          <p className="mt-2 text-slate-400">زد قوة هجومك وتغلب على أعداء الظلال.</p>
+    <div className="p-4 space-y-4" dir="rtl">
+      <div className="bg-slate-800 rounded-2xl p-4 text-center">
+        <p className="text-slate-400 text-sm">عالم الظلال</p>
+        <h1 className="text-3xl font-black text-white mt-1">برج التحدي</h1>
+        <div className="flex justify-center gap-4 mt-3">
+          <span className="text-emerald-400">💎 {gems}</span>
+          <span className="text-amber-400">🎫 {tickets} تذكرة</span>
         </div>
       </div>
 
-      <div className="rounded-[2rem] border border-slate-800 bg-slate-900/85 p-6 shadow-2xl shadow-slate-950/30">
-        <div className="flex items-center justify-between gap-3 text-right sm:flex-row sm:items-start">
-          <div>
-            <p className="text-sm text-slate-500">نسبة الإنجاز</p>
-            <p className="mt-2 text-3xl font-black text-white">72%</p>
-          </div>
-          <div className="h-3 flex-1 overflow-hidden rounded-full bg-slate-800">
-            <div className="h-full w-[72%] rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400" />
-          </div>
+      <div className="bg-slate-800 rounded-2xl p-4">
+        <p className="text-slate-400 text-sm text-center">الطابق الحالي</p>
+        <p className="text-4xl font-black text-white text-center mt-1">الطابق {currentFloor}</p>
+        <p className="text-slate-300 text-center mt-1">التهديد: {floor.enemy}</p>
+        <div className="mt-3 bg-slate-700 rounded-full h-2">
+          <div className="bg-emerald-400 h-2 rounded-full transition-all" style={{ width: `${floor.progress}%` }} />
         </div>
-
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-between">
-          <button className="rounded-3xl bg-emerald-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300">
-            بدء المعركة
-          </button>
-          <Link to="/profile" className="rounded-3xl border border-slate-800 bg-slate-950/80 px-5 py-3 text-sm font-semibold text-slate-200 transition hover:border-violet-400/40 hover:bg-slate-900">
-            فتح الملف الشخصي
-          </Link>
-        </div>
+        <p className="text-slate-400 text-xs text-center mt-1">{floor.progress}%</p>
       </div>
-    </section>
+
+      <div className="bg-slate-800 rounded-2xl p-4 text-center">
+        <p className="text-slate-400 text-sm">المكافأة عند الفوز</p>
+        <p className="text-2xl font-bold text-emerald-400 mt-1">💎 {floor.reward} جوهرة</p>
+      </div>
+
+      {battleResult && (
+        <div className={`rounded-2xl p-4 text-center font-bold text-lg ${battleResult === 'win' ? 'bg-emerald-900 text-emerald-300' : 'bg-red-900 text-red-300'}`}>
+          {battleResult === 'win' ? `🏆 انتصرت! حصلت على ${floor.reward} جوهرة` : '💀 خسرت المعركة! حاول مرة أخرى'}
+        </div>
+      )}
+
+      <button
+        onClick={startBattle}
+        disabled={isBattling || tickets <= 0}
+        className="w-full bg-emerald-400 text-slate-950 py-4 rounded-2xl font-bold text-lg transition hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isBattling ? '⚔️ جاري القتال...' : tickets <= 0 ? '❌ لا تذاكر متاحة' : '⚔️ بدء المعركة'}
+      </button>
+    </div>
   );
 }

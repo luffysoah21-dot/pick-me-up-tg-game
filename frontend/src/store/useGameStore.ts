@@ -78,6 +78,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     });
   },
 
-  removePartyMember: (heroId) =>
+  addGems: (amount: number) => set((state) => ({ gems: state.gems + amount })),
+    useTicket: () => set((state) => ({ tickets: Math.max(0, state.tickets - 1) })),
+    removePartyMember: (heroId) =>
     set((state) => ({ party: state.party.filter((id) => id !== heroId) })),
 }));
