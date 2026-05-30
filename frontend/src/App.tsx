@@ -19,7 +19,7 @@ const navItems = [
 function AppContent() {
   const { isLoading, error } = useTelegram();
 
-  if (isLoading) {
+  if (false) {
     return <TelegramLoader loading={isLoading} error={error} />;
   }
 
