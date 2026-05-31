@@ -32,11 +32,16 @@ const MemoizedPartyHeroCard = memo(PartyHeroCard);
 
 export default function Party() {
   const navigate = useNavigate();
-  const { gems, party, activeHeroId, setActiveHero, setToast } = useGameStore();
+  const { gems, party = [], activeHeroId, setActiveHero, setToast } = useGameStore();
   const { data: playerHeroes = [], isLoading, error } = useQuery(['userHeroes'], fetchPlayerHeroes, {
     staleTime: 30000,
     refetchOnWindowFocus: false,
   });
+  // Debug: log team-related state early for remote debugging (Railway / Mini App)
+  const team = party ?? [];
+  const heroes = (playerHeroes ?? []).map((entry) => entry.hero ?? null);
+  console.log('TEAM PAGE RENDER', { team, heroes, playerHeroes });
+  const safePlayerHeroes = playerHeroes ?? [];
   const [selectedHeroId, setSelectedHeroId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -46,14 +51,14 @@ export default function Party() {
   }, [error, setToast]);
 
   const heroCards = useMemo(
-    () => playerHeroes.map((entry) => ({
+    () => safePlayerHeroes.map((entry) => ({
       ...entry.hero,
       playerHeroId: entry.id,
       heroId: entry.hero_id,
       level: entry.level,
       stars: entry.stars,
     })),
-    [playerHeroes]
+    [safePlayerHeroes]
   );
 
   const selectedHero = useMemo(

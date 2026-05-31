@@ -26,9 +26,14 @@ export async function fetchHeroCatalog(): Promise<Hero[]> {
 }
 
 export async function fetchPlayerHeroes(): Promise<PlayerHeroEntry[]> {
-  const response = await fetch(`${BASE_URL}/api/player-heroes`);
-  const payload = await toJson(response);
-  return payload.heroes as PlayerHeroEntry[];
+  try {
+    const response = await fetch(`${BASE_URL}/api/player-heroes`);
+    const payload = await toJson(response);
+    return (payload?.heroes as PlayerHeroEntry[]) ?? [];
+  } catch (error) {
+    console.error('Failed to fetch player heroes:', error);
+    return [];
+  }
 }
 
 export async function savePlayerHero(heroId: string): Promise<PlayerHeroEntry> {
@@ -42,9 +47,14 @@ export async function savePlayerHero(heroId: string): Promise<PlayerHeroEntry> {
 }
 
 export async function fetchUserTeam(userId: string) {
-  const response = await fetch(`${BASE_URL}/api/team/${encodeURIComponent(userId)}`);
-  const payload = await toJson(response);
-  return payload.team as Array<{ user_id: string; hero_id: string; position: number }>;
+  try {
+    const response = await fetch(`${BASE_URL}/api/team/${encodeURIComponent(userId)}`);
+    const payload = await toJson(response);
+    return (payload?.team as Array<{ user_id: string; hero_id: string; position: number }>) ?? [];
+  } catch (error) {
+    console.error('Failed to fetch user team:', error);
+    return [];
+  }
 }
 
 export async function saveUserTeam(userId: string, heroId: string, position: number) {
