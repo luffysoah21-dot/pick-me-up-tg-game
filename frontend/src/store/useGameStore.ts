@@ -1,72 +1,74 @@
 import create from 'zustand';
 import { availableHeroes, Hero } from '../data/heroes';
+import { fetchPlayerHeroes, savePlayerHero, PlayerHeroEntry } from '../api/gameApi';
 
 interface GameState {
   gems: number;
   tickets: number;
-  collection: Hero[];
   party: string[];
-  lastDailyClaim: string | null;
-  dailyMessage: string;
-  claimDailyReward: () => void;
-  addHeroToCollection: (hero: Hero) => void;
-  summonWithTickets: (hero: Hero) => boolean;
-  summonWithGems: (hero: Hero) => boolean;
+  activeHeroId: string | null;
+  playerHeroes: PlayerHeroEntry[];
+  isLoading: boolean;
+  toastMessage: string | null;
+  toastType: 'success' | 'error' | null;
+  loadPlayerHeroes: () => Promise<void>;
+  summonHero: (heroId: string) => Promise<PlayerHeroEntry | undefined>;
+  setToast: (message: string, type?: 'success' | 'error') => void;
+  clearToast: () => void;
+  addGems: (amount: number) => void;
+  useTicket: () => boolean;
   togglePartyMember: (heroId: string) => void;
-  removePartyMember: (heroId: string) => void;
+  setActiveHero: (heroId: string) => void;
 }
 
 export const useGameStore = create<GameState>((set, get) => ({
   gems: 420,
   tickets: 28,
-  collection: [availableHeroes[0], availableHeroes[5]],
-  party: [availableHeroes[0].id],
-  lastDailyClaim: null,
-  dailyMessage: '',
+  party: [],
+  activeHeroId: null,
+  playerHeroes: [],
+  isLoading: false,
+  toastMessage: null,
+  toastType: null,
 
-  claimDailyReward: () => {
-    const today = new Date().toISOString().slice(0, 10);
-    if (get().lastDailyClaim === today) {
-      set(() => ({ dailyMessage: 'لقد حصلت على مكافئتك اليوم بالفعل.' }));
-      return;
+  loadPlayerHeroes: async () => {
+    set({ isLoading: true });
+    try {
+      const heroes = await fetchPlayerHeroes();
+      set({ playerHeroes: heroes, isLoading: false });
+    } catch (error: any) {
+      set({ isLoading: false, toastMessage: error.message || 'فشل تحميل الأبطال', toastType: 'error' });
     }
-
-    set((state) => ({
-      gems: state.gems + 40,
-      tickets: state.tickets + 4,
-      lastDailyClaim: today,
-      dailyMessage: 'حصلت على 4 تذاكر و40 جوهرة اليوم!'
-    }));
   },
 
-  addHeroToCollection: (hero) =>
-    set((state) => ({
-      collection: [...state.collection, hero],
-    })),
-
-  summonWithTickets: (hero) => {
-    if (get().tickets < 10) {
-      return false;
+  summonHero: async (heroId: string) => {
+    set({ isLoading: true });
+    try {
+      const newHero = await savePlayerHero(heroId);
+      set((state) => ({
+        playerHeroes: [...state.playerHeroes, newHero],
+        isLoading: false,
+      }));
+      return newHero;
+    } catch (error: any) {
+      set({ isLoading: false, toastMessage: error.message || 'فشل حفظ البطل', toastType: 'error' });
+      return undefined;
     }
-    set((state) => ({
-      tickets: state.tickets - 10,
-      collection: [...state.collection, hero],
-    }));
+  },
+
+  setToast: (message, type = 'success') => set({ toastMessage: message, toastType: type }),
+  clearToast: () => set({ toastMessage: null, toastType: null }),
+
+  addGems: (amount: number) => set((state) => ({ gems: state.gems + amount })),
+
+  useTicket: () => {
+    const tickets = get().tickets;
+    if (tickets <= 0) return false;
+    set({ tickets: tickets - 1 });
     return true;
   },
 
-  summonWithGems: (hero) => {
-    if (get().gems < 100) {
-      return false;
-    }
-    set((state) => ({
-      gems: state.gems - 100,
-      collection: [...state.collection, hero],
-    }));
-    return true;
-  },
-
-  togglePartyMember: (heroId) => {
+  togglePartyMember: (heroId: string) => {
     set((state) => {
       if (state.party.includes(heroId)) {
         return { party: state.party.filter((id) => id !== heroId) };
@@ -78,8 +80,5 @@ export const useGameStore = create<GameState>((set, get) => ({
     });
   },
 
-  addGems: (amount: number) => set((state) => ({ gems: state.gems + amount })),
-    useTicket: () => set((state) => ({ tickets: Math.max(0, state.tickets - 1) })),
-    removePartyMember: (heroId) =>
-    set((state) => ({ party: state.party.filter((id) => id !== heroId) })),
+  setActiveHero: (heroId: string) => set((state) => ({ activeHeroId: heroId, party: state.party.includes(heroId) ? state.party : [...state.party, heroId] })),
 }));

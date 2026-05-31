@@ -2,13 +2,15 @@ import dotenv from 'dotenv';
 import crypto from 'crypto';
 import cors from 'cors';
 import express from 'express';
+import { availableHeroes } from './heroData.js';
+import { readDb, saveDb } from './db.js';
 
 dotenv.config();
 
 const app = express();
 const port = Number(process.env.PORT ?? 4000);
 
-app.use(cors({ origin: ['https://localhost:4173', 'https://127.0.0.1:4173'] }));
+app.use(cors());
 app.use(express.json());
 
 function parseInitData(initData: string) {
@@ -60,6 +62,48 @@ function telegramInitMiddleware(req: express.Request, res: express.Response, nex
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', service: 'pick-me-up-tg-game backend' });
+});
+
+app.get('/api/welcome', (_req, res) => {
+  res.json({ message: 'Welcome to Pick Me Up TG Game backend!' });
+});
+
+app.get('/api/hero-catalog', async (_req, res) => {
+  res.json({ heroes: availableHeroes });
+});
+
+app.get('/api/player-heroes', async (_req, res) => {
+  const db = await readDb();
+  const heroes = db.player_heroes.map((entry: any) => {
+    const hero = availableHeroes.find((h) => h.id === entry.hero_id);
+    return { ...entry, hero };
+  });
+  res.json({ heroes });
+});
+
+app.post('/api/player-heroes', async (req, res) => {
+  const { hero_id } = req.body;
+  if (!hero_id || typeof hero_id !== 'string') {
+    return res.status(400).json({ error: 'hero_id is required' });
+  }
+
+  const hero = availableHeroes.find((h) => h.id === hero_id);
+  if (!hero) {
+    return res.status(400).json({ error: 'hero_id invalid' });
+  }
+
+  const db = await readDb();
+  const newEntry = {
+    id: `ph_${Date.now()}`,
+    hero_id,
+    createdAt: new Date().toISOString(),
+    level: 1,
+    stars: 1,
+  };
+  db.player_heroes.push(newEntry);
+  await saveDb(db);
+
+  res.status(201).json({ ...newEntry, hero });
 });
 
 app.post('/auth', telegramInitMiddleware, (req, res) => {

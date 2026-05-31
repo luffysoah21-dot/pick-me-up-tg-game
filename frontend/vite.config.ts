@@ -7,6 +7,13 @@ export default defineConfig({
   server: {
     port: 4173,
     https: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
   preview: {
     port: 4173,
