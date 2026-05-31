@@ -1,6 +1,7 @@
 import create from 'zustand';
 import { availableHeroes, Hero } from '../data/heroes';
-import { fetchPlayerHeroes, savePlayerHero, PlayerHeroEntry } from '../api/gameApi';
+import { fetchPlayerHeroes, savePlayerHero, saveUserTeam, PlayerHeroEntry } from '../api/gameApi';
+import { queryClient } from '../queryClient';
 
 interface GameState {
   gems: number;
@@ -49,6 +50,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         playerHeroes: [...state.playerHeroes, newHero],
         isLoading: false,
       }));
+      queryClient.invalidateQueries(['userHeroes']);
       return newHero;
     } catch (error: any) {
       set({ isLoading: false, toastMessage: error.message || 'فشل حفظ البطل', toastType: 'error' });
@@ -80,5 +82,13 @@ export const useGameStore = create<GameState>((set, get) => ({
     });
   },
 
-  setActiveHero: (heroId: string) => set((state) => ({ activeHeroId: heroId, party: state.party.includes(heroId) ? state.party : [...state.party, heroId] })),
+  setActiveHero: (heroId: string) => {
+    set((state) => ({
+      activeHeroId: heroId,
+      party: state.party.includes(heroId) ? state.party : [...state.party, heroId],
+    }));
+    saveUserTeam('default', heroId, 0).catch((error: any) => {
+      set({ toastMessage: error.message || 'فشل حفظ الفريق', toastType: 'error' });
+    });
+  },
 }));

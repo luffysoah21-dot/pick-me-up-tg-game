@@ -1,18 +1,49 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { rarityColors } from '../data/heroes';
 import { useGameStore } from '../store/useGameStore';
+import { useQuery } from '@tanstack/react-query';
+import { fetchPlayerHeroes } from '../api/gameApi';
+
+function PartyHeroCard({ hero, isActive, onOpen }: { hero: any; isActive: boolean; onOpen: (heroId: string) => void }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(hero.playerHeroId)}
+      className={`rounded-[2rem] border p-4 text-right transition active:scale-95 ${isActive ? 'border-amber-300 bg-amber-400/10 shadow-[0_0_30px_rgba(245,158,11,0.25)]' : 'border-slate-800 bg-slate-900/90 hover:border-slate-600'}`}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-4xl leading-none">{hero.image}</span>
+        <div className="text-left">
+          <p className="font-black text-white">{hero.name}</p>
+          <p className="text-xs text-slate-400">Lv.{hero.level} • {hero.rarity}</p>
+        </div>
+      </div>
+      <div className="mt-3 flex items-center gap-1">
+        {Array.from({ length: 5 }).map((_, idx) => (
+          <span key={idx} className={`text-sm ${idx < hero.stars ? 'text-amber-300' : 'text-slate-700'}`}>★</span>
+        ))}
+      </div>
+    </button>
+  );
+}
+
+const MemoizedPartyHeroCard = memo(PartyHeroCard);
 
 export default function Party() {
   const navigate = useNavigate();
-  const { gems, playerHeroes, loadPlayerHeroes, party, activeHeroId, setActiveHero, isLoading } = useGameStore();
+  const { gems, party, activeHeroId, setActiveHero, setToast } = useGameStore();
+  const { data: playerHeroes = [], isLoading, error } = useQuery(['userHeroes'], fetchPlayerHeroes, {
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
+  });
   const [selectedHeroId, setSelectedHeroId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (playerHeroes.length === 0) {
-      loadPlayerHeroes();
+    if (error) {
+      setToast((error as Error).message || 'فشل تحميل الأبطال', 'error');
     }
-  }, [playerHeroes.length, loadPlayerHeroes]);
+  }, [error, setToast]);
 
   const heroCards = useMemo(
     () => playerHeroes.map((entry) => ({
@@ -72,30 +103,10 @@ export default function Party() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 mb-4">
-        {heroCards.map((hero) => {
-          const isActive = activeHeroId === hero.playerHeroId;
-          return (
-            <button
-              key={hero.playerHeroId}
-              type="button"
-              onClick={() => openDetails(hero.playerHeroId)}
-              className={`rounded-[2rem] border p-4 text-right transition active:scale-95 ${isActive ? 'border-amber-300 bg-amber-400/10 shadow-[0_0_30px_rgba(245,158,11,0.25)]' : 'border-slate-800 bg-slate-900/90 hover:border-slate-600'}`}
-            >
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-4xl leading-none">{hero.image}</span>
-                <div className="text-left">
-                  <p className="font-black text-white">{hero.name}</p>
-                  <p className="text-xs text-slate-400">Lv.{hero.level} • {hero.rarity}</p>
-                </div>
-              </div>
-              <div className="mt-3 flex items-center gap-1">
-                {Array.from({ length: 5 }).map((_, idx) => (
-                  <span key={idx} className={`text-sm ${idx < hero.stars ? 'text-amber-300' : 'text-slate-700'}`}>★</span>
-                ))}
-              </div>
-            </button>
-          );
-        })}
+          {heroCards.map((hero) => {
+            const isActive = activeHeroId === hero.playerHeroId;
+            return <MemoizedPartyHeroCard key={hero.playerHeroId} hero={hero} isActive={isActive} onOpen={openDetails} />;
+          })}
       </div>
 
       <div className="rounded-[2rem] border border-white/10 bg-slate-900/90 p-4 shadow-2xl shadow-slate-950/40">

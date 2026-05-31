@@ -1,9 +1,11 @@
 import { Suspense, lazy, useEffect, useLayoutEffect, useState } from 'react';
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
 import BottomNav from './components/BottomNav';
 import Toast from './components/Toast';
 import { TelegramProvider, useTelegram } from './telegram';
 import { useGameStore } from './store/useGameStore';
+import { queryClient } from './queryClient';
 
 const Home = lazy(() => import('./pages/Home'));
 const Summon = lazy(() => import('./pages/Summon'));
@@ -77,10 +79,12 @@ function AppContent() {
 
 export default function App() {
   return (
+    <QueryClientProvider client={queryClient}>
     <TelegramProvider>
       <BrowserRouter>
         <AppContent />
       </BrowserRouter>
     </TelegramProvider>
+    </QueryClientProvider>
   );
 }

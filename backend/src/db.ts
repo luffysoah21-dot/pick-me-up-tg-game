@@ -5,10 +5,12 @@ const filePath = path.resolve(new URL('../data/db.json', import.meta.url).pathna
 
 interface DatabaseModel {
   player_heroes: Array<Record<string, unknown>>;
+  team_heroes: Array<{ user_id: string; hero_id: string; position: number }>;
 }
 
 const DEFAULT_DB: DatabaseModel = {
   player_heroes: [],
+  team_heroes: [],
 };
 
 export async function readDb(): Promise<DatabaseModel> {
