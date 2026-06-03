@@ -4,7 +4,7 @@ import { NavLink } from 'react-router-dom';
 const navItems = [
   { to: '/', label: 'الرئيسية', icon: '🏠' },
   { to: '/summon', label: 'استدعاء', icon: '✨' },
-  { to: '/party', label: 'فريقي', icon: '🛡️' },
+  { to: '/heroes', label: 'أبطالي', icon: '⚔️' },
   { to: '/tower', label: 'البرج', icon: '🏯' },
   { to: '/profile', label: 'الملف', icon: '👤' },
 ];

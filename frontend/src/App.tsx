@@ -9,7 +9,7 @@ import { queryClient } from './queryClient';
 
 const Home = lazy(() => import('./pages/Home'));
 const Summon = lazy(() => import('./pages/Summon'));
-const Party = lazy(() => import('./pages/Party'));
+const Heroes = lazy(() => import('./pages/HeroesPage'));
 const Tower = lazy(() => import('./pages/Tower'));
 const Profile = lazy(() => import('./pages/Profile'));
 
@@ -35,7 +35,7 @@ function AppContent() {
 
   useEffect(() => {
     import('./pages/Summon');
-    import('./pages/Party');
+    import('./pages/HeroesPage');
     import('./pages/Tower');
     import('./pages/Profile');
   }, []);
@@ -66,7 +66,7 @@ function AppContent() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/summon" element={<Summon />} />
-            <Route path="/party" element={<Party />} />
+            <Route path="/heroes" element={<Heroes />} />
             <Route path="/tower" element={<Tower />} />
             <Route path="/profile" element={<Profile />} />
           </Routes>

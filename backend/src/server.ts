@@ -136,48 +136,8 @@ app.post('/api/summon', async (req, res) => {
   };
   db.player_heroes.push(newEntry);
 
-  const existingTeam = db.team_heroes.filter((entry) => entry.user_id === user_id);
-  const freePosition = [0, 1, 2, 3, 4].find((position) => !existingTeam.some((entry) => entry.position === position));
-  if (freePosition !== undefined) {
-    db.team_heroes.push({ user_id, hero_id, position: freePosition });
-  }
-
   await saveDb(db);
-  res.status(201).json({ hero: { ...newEntry, hero }, teamPosition: freePosition });
-});
-
-app.get('/api/team/:userId', async (req, res) => {
-  const { userId } = req.params;
-  const db = await readDb();
-  const team = db.team_heroes
-    .filter((entry) => entry.user_id === userId)
-    .sort((a, b) => a.position - b.position);
-  res.json({ team });
-});
-
-app.post('/api/team/:userId', async (req, res) => {
-  const { userId } = req.params;
-  const { hero_id, position } = req.body;
-
-  if (!hero_id || typeof hero_id !== 'string') {
-    return res.status(400).json({ error: 'hero_id is required' });
-  }
-  if (typeof position !== 'number' || position < 0 || position > 4) {
-    return res.status(400).json({ error: 'position must be a number between 0 and 4' });
-  }
-
-  const db = await readDb();
-  const existingIndex = db.team_heroes.findIndex(
-    (entry) => entry.user_id === userId && entry.position === position
-  );
-  if (existingIndex >= 0) {
-    db.team_heroes[existingIndex] = { user_id: userId, hero_id, position };
-  } else {
-    db.team_heroes.push({ user_id: userId, hero_id, position });
-  }
-
-  await saveDb(db);
-  res.status(200).json({ userId, hero_id, position });
+  res.status(201).json({ hero: { ...newEntry, hero } });
 });
 
 app.post('/auth', telegramInitMiddleware, (req, res) => {

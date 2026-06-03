@@ -1,13 +1,11 @@
 import create from 'zustand';
 import { availableHeroes, Hero } from '../data/heroes';
-import { fetchPlayerHeroes, savePlayerHero, saveUserTeam, PlayerHeroEntry } from '../api/gameApi';
+import { fetchPlayerHeroes, savePlayerHero, PlayerHeroEntry } from '../api/gameApi';
 import { queryClient } from '../queryClient';
 
 interface GameState {
   gems: number;
   tickets: number;
-  party: string[];
-  activeHeroId: string | null;
   playerHeroes: PlayerHeroEntry[];
   isLoading: boolean;
   toastMessage: string | null;
@@ -18,15 +16,11 @@ interface GameState {
   clearToast: () => void;
   addGems: (amount: number) => void;
   useTicket: () => boolean;
-  togglePartyMember: (heroId: string) => void;
-  setActiveHero: (heroId: string) => void;
 }
 
 export const useGameStore = create<GameState>((set, get) => ({
   gems: 420,
   tickets: 28,
-  party: [],
-  activeHeroId: null,
   playerHeroes: [],
   isLoading: false,
   toastMessage: null,
@@ -68,27 +62,5 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (tickets <= 0) return false;
     set({ tickets: tickets - 1 });
     return true;
-  },
-
-  togglePartyMember: (heroId: string) => {
-    set((state) => {
-      if (state.party.includes(heroId)) {
-        return { party: state.party.filter((id) => id !== heroId) };
-      }
-      if (state.party.length >= 5) {
-        return state;
-      }
-      return { party: [...state.party, heroId] };
-    });
-  },
-
-  setActiveHero: (heroId: string) => {
-    set((state) => ({
-      activeHeroId: heroId,
-      party: state.party.includes(heroId) ? state.party : [...state.party, heroId],
-    }));
-    saveUserTeam('default', heroId, 0).catch((error: any) => {
-      set({ toastMessage: error.message || 'فشل حفظ الفريق', toastType: 'error' });
-    });
   },
 }));
