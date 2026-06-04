@@ -20,6 +20,10 @@ export default function Tower() {
   if (battleFloor === 1) return <Floor1Battle onBack={() => { setBattleFloor(null); setSelected(1); }} />;
   if (battleFloor) return <Battle floor={battleFloor} onBack={(won) => { setBattleFloor(null); if(won) setSelected(battleFloor); }} />;
 
+  const selectedTeamStr = localStorage.getItem('my_team');
+  const selectedTeam = selectedTeamStr ? JSON.parse(selectedTeamStr) : [];
+  const hasTeam = Array.isArray(selectedTeam) && selectedTeam.length > 0;
+
   return (
     <div style={{ padding: 16, direction: "rtl", display: "flex", flexDirection: "column", gap: 12 }}>
       <div style={{ color: "#fff", fontSize: 20, fontWeight: 900 }}>🏯 برج التحدي</div>
