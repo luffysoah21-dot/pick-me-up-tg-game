@@ -26,7 +26,6 @@ export default function App() {
     tower:   <Tower />,
     profile: <Profile />,
     admin: <AdminPanel />,
-    admin: <AdminPanel />,
   };
 
   return (
