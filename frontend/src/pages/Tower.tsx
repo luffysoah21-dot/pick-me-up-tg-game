@@ -35,7 +35,7 @@ export default function Tower() {
         const selectedTeamStr = localStorage.getItem('selectedTeam');
         const selectedTeam = selectedTeamStr ? JSON.parse(selectedTeamStr) : [];
         const hasTeam = Array.isArray(selectedTeam) && selectedTeam.length > 0;
-        const isFloor1Disabled = f.floor === 1 && !hasTeam;
+        const isFloor1Disabled = !hasTeam;
         
         return (
         <div key={f.floor} style={{ background: (f.locked || isFloor1Disabled) ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.06)", borderRadius: 14, padding: 16, border: `1px solid ${(f.locked || isFloor1Disabled) ? "rgba(255,255,255,0.05)" : f.color + "44"}`, display: "flex", alignItems: "center", justifyContent: "space-between", opacity: (f.locked || isFloor1Disabled) ? 0.5 : 1 }}>
