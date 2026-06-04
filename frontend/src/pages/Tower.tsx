@@ -1,12 +1,14 @@
 import { useState } from "react";
 import TeamFormation from "./TeamFormation";
 import Battle from "./Battle";
+import Floor1Battle from "../components/Floor1Battle";
 
 const floors = [
   { floor: 50, name: "الطابق المظلم",  difficulty: "أسطوري", color: "#EF4444", locked: true },
   { floor: 30, name: "قلعة الظلام",    difficulty: "صعب",    color: "#F59E0B", locked: true },
   { floor: 20, name: "غرفة الامتحان",  difficulty: "متوسط",  color: "#60A5FA", locked: false },
   { floor: 10, name: "البداية",         difficulty: "سهل",   color: "#34D399", locked: false },
+  { floor: 1,  name: "الطابق الأول",   difficulty: "بداية",  color: "#8B5CF6", locked: false },
 ];
 
 export default function Tower() {
@@ -15,6 +17,7 @@ export default function Tower() {
   const [battleFloor, setBattleFloor] = useState<number | null>(null);
 
   if (showTeam) return <TeamFormation onBack={() => setShowTeam(false)} />;
+  if (battleFloor === 1) return <Floor1Battle onBack={() => { setBattleFloor(null); setSelected(1); }} />;
   if (battleFloor) return <Battle floor={battleFloor} onBack={(won) => { setBattleFloor(null); if(won) setSelected(battleFloor); }} />;
 
   return (
@@ -28,17 +31,24 @@ export default function Tower() {
       }}>
         ⚔️ تكوين الفريق قبل المعركة
       </button>
-      {floors.map(f => (
-        <div key={f.floor} style={{ background: f.locked ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.06)", borderRadius: 14, padding: 16, border: `1px solid ${f.locked ? "rgba(255,255,255,0.05)" : f.color + "44"}`, display: "flex", alignItems: "center", justifyContent: "space-between", opacity: f.locked ? 0.5 : 1 }}>
-          <button disabled={f.locked} onClick={() => setBattleFloor(f.floor)} style={{ background: f.locked ? "rgba(107,114,128,0.3)" : `${f.color}22`, color: f.locked ? "#9CA3AF" : f.color, border: `1px solid ${f.locked ? "#374151" : f.color + "55"}`, borderRadius: 10, padding: "8px 14px", cursor: f.locked ? "default" : "pointer", fontWeight: 700 }}>
-            {f.locked ? "🔒 مغلق" : selected === f.floor ? "✅ تم" : "▶ ابدأ"}
+      {floors.map(f => {
+        const selectedTeamStr = localStorage.getItem('selectedTeam');
+        const selectedTeam = selectedTeamStr ? JSON.parse(selectedTeamStr) : [];
+        const hasTeam = Array.isArray(selectedTeam) && selectedTeam.length > 0;
+        const isFloor1Disabled = f.floor === 1 && !hasTeam;
+        
+        return (
+        <div key={f.floor} style={{ background: (f.locked || isFloor1Disabled) ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.06)", borderRadius: 14, padding: 16, border: `1px solid ${(f.locked || isFloor1Disabled) ? "rgba(255,255,255,0.05)" : f.color + "44"}`, display: "flex", alignItems: "center", justifyContent: "space-between", opacity: (f.locked || isFloor1Disabled) ? 0.5 : 1 }}>
+          <button disabled={f.locked || isFloor1Disabled} onClick={() => setBattleFloor(f.floor)} style={{ background: (f.locked || isFloor1Disabled) ? "rgba(107,114,128,0.3)" : `${f.color}22`, color: (f.locked || isFloor1Disabled) ? "#9CA3AF" : f.color, border: `1px solid ${(f.locked || isFloor1Disabled) ? "#374151" : f.color + "55"}`, borderRadius: 10, padding: "8px 14px", cursor: (f.locked || isFloor1Disabled) ? "default" : "pointer", fontWeight: 700 }}>
+            {f.locked ? "🔒 مغلق" : isFloor1Disabled ? "⚠️ لا فريق" : selected === f.floor ? "✅ تم" : "▶ ابدأ"}
           </button>
           <div style={{ textAlign: "right" }}>
             <div style={{ color: "#fff", fontWeight: 700 }}>الطابق {f.floor} — {f.name}</div>
             <div style={{ color: f.color, fontSize: 12 }}>صعوبة: {f.difficulty}</div>
           </div>
         </div>
-      ))}
+        );
+      })}
       {selected && <div style={{ background: "rgba(52,211,153,0.1)", borderRadius: 14, padding: 16, border: "1px solid rgba(52,211,153,0.3)", textAlign: "center", color: "#34D399", fontWeight: 700 }}>⚔️ جاهز للقتال في الطابق {selected}!</div>}
     </div>
   );
