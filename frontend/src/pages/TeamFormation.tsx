@@ -35,9 +35,9 @@ export default function TeamFormation({ onBack }: { onBack: () => void }) {
   const toggleHero = (hero: Hero) => {
     const exists = team.some(h => h.name === hero.name);
     if (exists) {
-      saveTeam(team.filter(h => h.name !== hero.name));
+      saveTeam(team.filter(h => h.id !== hero.id));
     } else if (team.length < 5) {
-      saveTeam([...team, hero]);
+      if (!team.find(h => h.id === hero.id)) saveTeam([...team, hero]);
     } else {
       alert("الحد الأقصى 5 أبطال في الفريق");
     }
