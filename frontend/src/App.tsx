@@ -14,7 +14,6 @@ const TABS = [
   { id: "tower",  label: "البرج",    icon: "🏯" },
   { id: "admin", label: "إدارة", icon: "👑" },
   { id: "profile",label: "الملف",   icon: "👤" },
-  { id: "admin", label: "إدارة", icon: "👑" },
 ];
 
 export default function App() {
