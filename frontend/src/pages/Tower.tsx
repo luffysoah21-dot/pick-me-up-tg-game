@@ -1,62 +1,113 @@
 import { useState } from "react";
-import TeamFormation from "./TeamFormation";
-import Floor1Battle from "../components/Floor1Battle";
+import FLOORS from "../data/floors";
+import type { Floor } from "../data/floors";
 
-const floors = [
-  { floor: 1, name: "الطابق الأول", difficulty: "بداية", color: "#8B5CF6", locked: false },
-];
+const Tower = () => {
+  const [selectedFloor, setSelectedFloor] = useState<Floor | null>(null);
+  const [selectedStage, setSelectedStage] = useState<number | null>(null);
 
-export default function Tower() {
-  const [showTeam, setShowTeam] = useState(false);
-  const [battleFloor, setBattleFloor] = useState<number | null>(null);
+  if (selectedFloor && selectedStage !== null) {
+    const stage = selectedFloor.stages[selectedStage];
+    return (
+      <div style={{ padding: 16, color: "#fff", textAlign: "center" }}>
+        <h2>{stage.name}</h2>
+        <p>{stage.description}</p>
+        {stage.timeLimit && <p>⏱ الوقت: {stage.timeLimit} ثانية</p>}
+        {stage.enemies && <p>👹 الأعداء: {stage.enemies.join(", ")}</p>}
+        {stage.puzzleHint && <p>💡 تلميح: {stage.puzzleHint}</p>}
+        <p>🏆 المكافأة: {stage.reward.exp} XP + {stage.reward.gold} ذهب</p>
+        <button
+          onClick={() => setSelectedStage(null)}
+          style={{
+            marginTop: 16,
+            padding: "12px 24px",
+            background: "#7C3AED",
+            color: "#fff",
+            border: "none",
+            borderRadius: 12,
+            fontSize: 16,
+            cursor: "pointer",
+          }}
+        >
+          ← رجوع
+        </button>
+      </div>
+    );
+  }
 
-  const selectedTeamStr = localStorage.getItem('my_team');
-  const selectedTeam = selectedTeamStr ? JSON.parse(selectedTeamStr) : [];
-  const hasTeam = Array.isArray(selectedTeam) && selectedTeam.length > 0;
-
-  if (showTeam) return <TeamFormation onBack={() => setShowTeam(false)} />;
-  if (battleFloor === 1) return <Floor1Battle floor={1} onBack={(won) => { setBattleFloor(null); }} />;
+  if (selectedFloor) {
+    return (
+      <div style={{ padding: 16, color: "#fff" }}>
+        <h2 style={{ textAlign: "center" }}>{selectedFloor.name}</h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {selectedFloor.stages.map((stage, index) => (
+            <button
+              key={stage.id}
+              onClick={() => setSelectedStage(index)}
+              style={{
+                padding: 16,
+                background: "rgba(124,58,237,0.3)",
+                border: "1px solid #7C3AED",
+                borderRadius: 12,
+                color: "#fff",
+                textAlign: "right",
+                cursor: "pointer",
+              }}
+            >
+              <div style={{ fontWeight: 700 }}>المرحلة {stage.id}: {stage.name}</div>
+              <div style={{ fontSize: 12, color: "#aaa" }}>{stage.description}</div>
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={() => setSelectedFloor(null)}
+          style={{
+            marginTop: 16,
+            padding: "12px 24px",
+            background: "#374151",
+            color: "#fff",
+            border: "none",
+            borderRadius: 12,
+            fontSize: 16,
+            cursor: "pointer",
+            width: "100%",
+          }}
+        >
+          ← رجوع للبرج
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ padding: 16, direction: "rtl", display: "flex", flexDirection: "column", gap: 12 }}>
-      <div style={{ color: "#fff", fontSize: 20, fontWeight: 900 }}>🏯 برج التحدي</div>
-
-      <button
-        onClick={() => setShowTeam(true)}
-        style={{
-          background: "linear-gradient(135deg, #7C3AED, #4F46E5)",
-          border: "none", borderRadius: 14, padding: 16, width: "100%",
-          color: "#fff", fontWeight: 700, fontSize: 16, cursor: "pointer",
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-        }}
-      >
-        ⚔️ تكوين الفريق قبل المعركة
-      </button>
-
-      {floors.map(f => (
-        <div key={f.floor} style={{
-          background: "rgba(255,255,255,0.06)", borderRadius: 14,
-          padding: 16, border: `1px solid ${f.color}44`,
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-        }}>
-          <div>
-            <div style={{ color: "#fff", fontWeight: 700 }}>الطابق {f.floor} — {f.name}</div>
-            <div style={{ color: f.color, fontSize: 12 }}>صعوبة: {f.difficulty}</div>
-          </div>
+    <div style={{ padding: 16, color: "#fff" }}>
+      <h2 style={{ textAlign: "center", fontSize: 20, fontWeight: 900 }}>🏰 البرج</h2>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {FLOORS.map((floor) => (
           <button
-            disabled={!hasTeam}
-            onClick={() => setBattleFloor(f.floor)}
+            key={floor.id}
+            onClick={() => setSelectedFloor(floor)}
             style={{
-              background: hasTeam ? f.color : "rgba(107,114,128,0.3)",
-              color: hasTeam ? "#fff" : "#9CA3AF",
-              border: "none", borderRadius: 10, padding: "8px 14px",
-              cursor: hasTeam ? "pointer" : "default", fontWeight: 700,
+              padding: 16,
+              background: "rgba(124,58,237,0.2)",
+              border: "1px solid #7C3AED",
+              borderRadius: 12,
+              color: "#fff",
+              textAlign: "right",
+              cursor: "pointer",
             }}
           >
-            {hasTeam ? "▶ ابدأ" : "⚠️ لا فريق"}
+            <div style={{ fontWeight: 700, fontSize: 16 }}>
+              طابق {floor.id}: {floor.name}
+            </div>
+            <div style={{ fontSize: 12, color: "#aaa" }}>
+              {floor.stages.length} مراحل | {floor.unlockCondition}
+            </div>
           </button>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
-}
+};
+
+export default Tower;
