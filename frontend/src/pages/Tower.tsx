@@ -32,9 +32,6 @@ export default function Tower() {
         ⚔️ تكوين الفريق قبل المعركة
       </button>
       {floors.map(f => {
-        const selectedTeamStr = localStorage.getItem('my_team');
-        const selectedTeam = selectedTeamStr ? JSON.parse(selectedTeamStr) : [];
-        const hasTeam = Array.isArray(selectedTeam) && selectedTeam.length > 0;
         const isFloor1Disabled = !hasTeam;
         
         return (
