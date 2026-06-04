@@ -92,7 +92,7 @@ const Floor1Battle: React.FC<Floor1BattleProps> = ({ onBack }) => {
 
   const initializeBattle = () => {
     // Load selected team from localStorage
-    const selectedTeamStr = localStorage.getItem('selectedTeam');
+    const selectedTeamStr = localStorage.getItem('my_team');
     const selectedTeam = selectedTeamStr ? JSON.parse(selectedTeamStr) : [];
     const deadHeroesStr = localStorage.getItem('deadHeroes');
     const deadHeroes = deadHeroesStr ? JSON.parse(deadHeroesStr) : [];
