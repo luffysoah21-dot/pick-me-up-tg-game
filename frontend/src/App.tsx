@@ -4,6 +4,7 @@ import Summon from "./pages/Summon";
 import Tower from "./pages/Tower";
 import Profile from "./pages/Profile";
 import Home from "./pages/Home";
+import AdminPanel from "./pages/AdminPanel";
 
 const TABS = [
   { id: "home",   label: "الرئيسية", icon: "🏠" },
@@ -11,6 +12,7 @@ const TABS = [
   { id: "heroes", label: "أبطالي",   icon: "⚔️" },
   { id: "tower",  label: "البرج",    icon: "🏯" },
   { id: "profile",label: "الملف",   icon: "👤" },
+  { id: "admin", label: "إدارة", icon: "👑" },
 ];
 
 export default function App() {
@@ -22,6 +24,7 @@ export default function App() {
     heroes:  <HeroesPage />,
     tower:   <Tower />,
     profile: <Profile />,
+    admin: <AdminPanel />,
   };
 
   return (
