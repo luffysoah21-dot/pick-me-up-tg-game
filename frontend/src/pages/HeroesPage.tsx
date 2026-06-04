@@ -1,6 +1,12 @@
+import { useState, useEffect } from "react";
+
 export default function HeroesPage() {
-  const stored = localStorage.getItem("my_heroes");
-  const heroes = stored ? JSON.parse(stored) : [];
+  const [heroes, setHeroes] = useState<any[]>([]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("my_heroes");
+    setHeroes(stored ? JSON.parse(stored) : []);
+  }, []);
 
   return (
     <div style={{ padding: 16, direction: "rtl", display: "flex", flexDirection: "column", gap: 12 }}>
