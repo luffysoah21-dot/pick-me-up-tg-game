@@ -38,7 +38,8 @@ export default function Summon() {
       const names = heroNames[picked.rarity];
       const name = names[Math.floor(Math.random() * names.length)];
       const stars = ({ SSR: 5, SR: 4, R: 3, B: 1 } as Record<string,number>)[picked.rarity] ?? 1;
-      const hero = { id: Date.now() + Math.random(), name, rarity: picked.rarity, stars, icon: picked.icon };
+      const base = ({ SSR: { attack: 850, hp: 3000 }, SR: { attack: 600, hp: 2000 }, R: { attack: 350, hp: 1200 }, B: { attack: 150, hp: 600 } } as any)[picked.rarity] ?? { attack: 150, hp: 600 };
+      const hero = { id: Date.now() + Math.random(), name, rarity: picked.rarity, stars, icon: picked.icon, attack: base.attack + stars * 50, hp: base.hp + stars * 200 };
       setCrystals(c => c - cost);
       setResult(hero);
       saveHero(hero);
