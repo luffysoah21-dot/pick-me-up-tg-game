@@ -12,8 +12,9 @@ const ENEMIES: Record<number, Enemy> = {
 
 export default function Battle({ floor, onBack }: { floor: number; onBack: (won: boolean) => void }) {
   const savedTeam: Hero[] = JSON.parse(localStorage.getItem("my_team") ?? "[]");
-  const teamAtk = savedTeam.reduce((s,h) => s + (h.attack ?? 300 + h.stars*50), 0) || 300;
-  const teamHpMax = savedTeam.reduce((s,h) => s + (h.hp ?? 1000 + h.stars*100), 0) || 1000;
+  const RMULT: Record<string,number> = { SSR:4, SR:3, R:2, B:1 };
+  const teamAtk = savedTeam.reduce((s,h) => s + ((h.attack ?? 200) + h.stars * 100) * (RMULT[h.rarity] ?? 1), 0) || 300;
+  const teamHpMax = savedTeam.reduce((s,h) => s + ((h.hp ?? 500) + h.stars * 200) * (RMULT[h.rarity] ?? 1), 0) || 1000;
   const enemy = ENEMIES[floor] ?? { name: "عدو مجهول", icon: "👾", attack: 100, hp: 800, maxHp: 800 };
 
   const [eHp, setEHp] = useState(enemy.hp);
