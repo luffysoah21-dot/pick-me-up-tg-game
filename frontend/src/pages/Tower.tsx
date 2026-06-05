@@ -1,3 +1,4 @@
+import Battle from './Battle';
 import { useState } from "react";
 import FLOORS from "../data/floors";
 import type { Floor } from "../data/floors";
@@ -8,31 +9,20 @@ const Tower = () => {
 
   if (selectedFloor && selectedStage !== null) {
     const stage = selectedFloor.stages[selectedStage];
-    return (
-      <div style={{ padding: 16, color: "#fff", textAlign: "center" }}>
-        <h2>{stage.name}</h2>
-        <p>{stage.description}</p>
-        {stage.timeLimit && <p>⏱ الوقت: {stage.timeLimit} ثانية</p>}
-        {stage.enemies && <p>👹 الأعداء: {stage.enemies.join(", ")}</p>}
-        {stage.puzzleHint && <p>💡 تلميح: {stage.puzzleHint}</p>}
-        <p>🏆 المكافأة: {stage.reward.exp} XP + {stage.reward.gold} ذهب</p>
-        <button
-          onClick={() => setSelectedStage(null)}
-          style={{
-            marginTop: 16,
-            padding: "12px 24px",
-            background: "#7C3AED",
-            color: "#fff",
-            border: "none",
-            borderRadius: 12,
-            fontSize: 16,
-            cursor: "pointer",
-          }}
-        >
-          ← رجوع
-        </button>
-      </div>
-    );
+    const enemies = (stage.enemies ?? []).map((e: any) => ({
+      name: e, icon: "👹",
+      hp: 500 + selectedStage * 300,
+      attack: 80 + selectedStage * 50,
+      defense: 20 + selectedStage * 10,
+      maxHp: 500 + selectedStage * 300,
+    }));
+    return <Battle
+      floor={selectedStage + 1}
+      onBack={(won) => {
+        setSelectedStage(null);
+        if (won) setSelectedFloor(null);
+      }}
+    />;
   }
 
   if (selectedFloor) {
